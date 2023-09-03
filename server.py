@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, Form, UploadFile
+from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 import librosa
 import os
@@ -13,20 +13,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
-def some():
-    return {"data": "Hello server"}
-
-@app.route("/", methods=["POST"])
-def predict(audio: UploadFile = File(...)):
-    # get file from POST request and save it
-    print(audio)
-    # audio_file.save(file_name)
-    # y, sr = librosa.load(file_name)
-    # mel_spec = librosa.feature.melspectrogram(y=y, sr=sr)
-    # mel_spec_db = librosa.power_to_db(mel_spec, ref=np.max)
-    # mel_spec_db = np.resize(mel_spec_db, (128, 128))
-    # # we don't need the audio file any more - let's delete it!
-    # os.remove(file_name)
-    # print(mel_spec_db)
-    return {"data": "FCUK"}
+@app.post("/")
+async def predict(audio: UploadFile = File(...)):
+    contents = await audio.read()
+    with open(audio.filename, "wb") as f:
+        f.write(contents)
+    y, sr = librosa.load(audio.filename)
+    mel_spec = librosa.feature.melspectrogram(y=y, sr=sr)
+    mel_spec_db = librosa.power_to_db(mel_spec, ref=np.max)
+    mel_spec_db = np.resize(mel_spec_db, (128, 128))
+    os.remove(audio.filename)
+    res = list()
+    for row in mel_spec_db:
+        res.append(row.tolist())
+    return {"data": res}
