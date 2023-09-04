@@ -6,7 +6,7 @@ import numpy as np
 
 app = FastAPI()
 
-app.add_middleware(
+app.add_middleware( 
     CORSMiddleware,
     allow_origins=["*"],
     allow_methods=["*"],
